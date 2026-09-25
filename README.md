@@ -7,6 +7,106 @@ Optional tools to help manage data in a mergerfs pool.
 All of these suplimental tools are self contained Python3 apps. Make sure you have Python 3 installed and either run `make install` or copy the file to `/usr/local/bin` or wherever you keep your binarys and make it executable (chmod +x).
 
 ## TOOLS
+### mergerfs-tools
+
+A single unified front-end which wraps the tools below. It exposes one new
+option vocabulary and translates internally to the original scripts; you never
+type their original flags. Data-changing commands execute by default, use
+`--dry-run` to preview. It is only a wrapper, the individual scripts remain
+usable directly.
+
+`balance` has no preview mode and always executes. `ctl` always writes on
+`add`/`remove`/`set`. `fsck` only fixes with `--fix`. `vacate` only copies and
+never deletes source data.
+
+[Download latest](https://raw.githubusercontent.com/trapexit/mergerfs-tools/master/src/mergerfs-tools)
+
+```
+用法: mergerfs-tools <命令> [选项] <目录>
+
+mergerfs 辅助工具的统一入口。所有选项都是本工具自定义的，底层各脚本的
+原始参数由本工具内部翻译，你无需了解。
+
+命令:
+  ctl add|remove|list|get|set|info   操作运行中的 mergerfs 挂载
+  fsck                               审计/修复文件的权限与属主
+  dup                                在分支间复制文件，使每个文件有 N 份
+  dedup                              删除分支间的重复文件
+  balance                            按剩余空间在分支间搬移文件
+  consolidate                        把单个目录的文件归拢到一个分支
+  trash                              在每个分支创建 .Trash 目录
+  vacate <pool> <branch>             安全下架分支：移出池并把数据复制进池
+
+通用选项:
+  -n, --dry-run        只预览，不执行
+  -v, --verbose        提高输出详细度（可重复）
+  -h, --help           显示本帮助
+  --include GLOB       包含匹配的文件/目录/路径（可重复）
+  --exclude GLOB       排除匹配的文件/目录/路径（可重复）
+
+各命令专属选项:
+  ctl            --mount PATH
+  fsck           --fix manual|newest|nonroot    --check-size
+  dup            --copies N    --keep MODE    --prune
+  dedup          --keep MODE   --ignore COND  --strict
+  balance        --free-gap PCT   --min-size SZ   --max-size SZ
+  consolidate    --dir-max-files N   --dir-max-size SZ
+
+取值:
+  --keep    manual | oldest | newest | largest | smallest | most-space | mergerfs
+            （dup 不支持 manual、most-space）
+  --ignore  none | same-size | different-size | same-time | different-time |
+            same-hash | different-hash | same-short-hash | different-short-hash
+  SIZE      整数 + K/M/G/T，例如 16G
+
+过滤参数的处理（执行前校验）:
+  目标目录必须存在，否则报错。
+  不含通配符的值会在目标目录下探测：不存在则报错；存在则按文件/目录分派，
+  底层无法处理的组合直接报错（如 dup 给目录、consolidate 给文件、
+  balance 按目录名排除、dup/dedup 的值里带 '/'）。
+  含通配符（* ? [）的值无法预先探测，交由底层匹配器处理。
+
+说明:
+  会改动数据的命令默认直接执行，加 --dry-run 只预览。
+  fsck 只有给出 --fix 才修复，否则只审计。
+  vacate 只复制、从不删除源数据。
+  ctl 的写操作立即生效，不支持 --dry-run；balance 没有预览模式。
+
+示例:
+  # 预览去重：保留最新文件，并排除 .git 目录
+  mergerfs-tools dedup --dry-run --keep newest --exclude .git /mnt/pool
+
+  # 实际去重：只处理 .mkv，且要求内容 md5 相同
+  mergerfs-tools dedup --include '*.mkv' --ignore same-hash /mnt/pool
+
+  # 复制文件，使每个文件至少有两份
+  mergerfs-tools dup --copies 2 /mnt/pool
+
+  # 审计某目录的权限/属主不一致
+  mergerfs-tools fsck --verbose /mnt/pool/media
+
+  # 把各分支的使用率差距压到 5% 以内
+  mergerfs-tools balance --free-gap 5 /mnt/pool
+
+  # 把某目录的文件归拢到单个分支（先预览）
+  mergerfs-tools consolidate --dry-run /mnt/pool/music
+
+  # 操作运行中的挂载：添加 / 移除分支
+  mergerfs-tools ctl --mount /mnt/pool add path /mnt/disk3
+  mergerfs-tools ctl --mount /mnt/pool remove path /mnt/disk3
+
+  # 查看挂载信息
+  mergerfs-tools ctl --mount /mnt/pool info
+  mergerfs-tools ctl --mount /mnt/pool list values
+
+  # 在各分支创建 .Trash 目录（需要 root）
+  sudo mergerfs-tools trash /mnt/pool
+
+  # 下架 /mnt/disk3：先预览，确认后去掉 --dry-run 执行
+  mergerfs-tools vacate --dry-run /mnt/pool /mnt/disk3
+  mergerfs-tools vacate /mnt/pool /mnt/disk3
+```
+
 ### mergerfs.ctl
 
 A wrapper around the mergerfs xattr interface.
