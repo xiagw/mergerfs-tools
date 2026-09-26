@@ -77,37 +77,37 @@ mergerfs 辅助工具的统一入口。所有选项都是本工具自定义的�
 
 示例:
   # 预览去重：保留最新文件，并排除 .git 目录
-  ${PROG} dedup --dry-run --keep newest --exclude .git /mnt/pool
+  ${PROG} dedup --dry-run --keep newest --exclude .git /neo
 
   # 实际去重：只处理 .mkv，且要求内容 md5 相同
-  ${PROG} dedup --include '*.mkv' --ignore same-hash /mnt/pool
+  ${PROG} dedup --include '*.mkv' --ignore same-hash /neo
 
   # 复制文件，使每个文件至少有两份
-  ${PROG} dup --copies 2 /mnt/pool
+  ${PROG} dup --copies 2 /neo
 
   # 审计某目录的权限/属主不一致
-  ${PROG} fsck --verbose /mnt/pool/media
+  ${PROG} fsck --verbose /neo/media
 
   # 把各分支的使用率差距压到 5% 以内
-  ${PROG} balance --free-gap 5 /mnt/pool
+  ${PROG} balance --free-gap 5 /neo
 
   # 把某目录的文件归拢到单个分支（先预览）
-  ${PROG} consolidate --dry-run /mnt/pool/music
+  ${PROG} consolidate --dry-run /neo/music
 
   # 操作运行中的挂载：添加 / 移除分支
-  ${PROG} ctl --mount /mnt/pool add path /mnt/disk3
-  ${PROG} ctl --mount /mnt/pool remove path /mnt/disk3
+  ${PROG} ctl --mount /neo add path /media/xx/disk3
+  ${PROG} ctl --mount /neo remove path /media/xx/disk3
 
   # 查看挂载信息
-  ${PROG} ctl --mount /mnt/pool info
-  ${PROG} ctl --mount /mnt/pool list values
+  ${PROG} ctl --mount /neo info
+  ${PROG} ctl --mount /neo list values
 
   # 在各分支创建 .Trash 目录（需要 root）
-  sudo ${PROG} trash /mnt/pool
+  sudo ${PROG} trash /neo
 
-  # 下架 /mnt/disk3：先预览，确认后去掉 --dry-run 执行
-  ${PROG} vacate --dry-run /mnt/pool /mnt/disk3
-  ${PROG} vacate /mnt/pool /mnt/disk3
+  # 下架 /media/xx/disk3：先预览，确认后去掉 --dry-run 执行
+  ${PROG} vacate --dry-run /neo /media/xx/disk3
+  ${PROG} vacate /neo /media/xx/disk3
 EOF
 }
 
